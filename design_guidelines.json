@@ -1,0 +1,117 @@
+{
+  "theme_and_archetype": {
+    "theme": "light",
+    "archetype": "3 (Pastel & Soft) with Neo-Brutalist Contrast",
+    "rationale": "The user requested an app that is 'easy to navigate but super nice and cute' aimed at homeless/low-income individuals. Archetype 3 provides an optimistic, approachable, and non-institutional vibe. Adding Neo-Brutalist contrast (thick borders, high-contrast dark text) ensures accessibility and legibility are not compromised by the soft pastels, providing both warmth and utility."
+  },
+  "typography": {
+    "strategy": "Soft Utility / Friendly & Approachable",
+    "fonts": {
+      "headings": "Nunito",
+      "body": "Figtree"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-black tracking-tight text-slate-900",
+      "h2": "text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900",
+      "h3": "text-xl sm:text-2xl font-bold text-slate-800",
+      "h4": "text-lg font-bold text-slate-800",
+      "body": "text-base leading-relaxed text-slate-700 font-medium",
+      "small": "text-sm font-semibold tracking-wide text-slate-600 uppercase"
+    },
+    "rules": [
+      "Headings must use Nunito for a friendly, rounded feel.",
+      "Body must use Figtree for extreme legibility.",
+      "Never use pure black text; use slate-900 or slate-800 to keep it soft.",
+      "Tight letter spacing on headings, loose line height on body."
+    ]
+  },
+  "colors": {
+    "palette": {
+      "background": "#FFFDF9", 
+      "surface": "#FFFFFF",
+      "primary": "#FF9D8A", 
+      "primary_hover": "#FF8A73",
+      "primary_foreground": "#0F172A",
+      "secondary": "#A7E6D7",
+      "secondary_foreground": "#0F172A",
+      "accent_yellow": "#FDE68A",
+      "accent_blue": "#BFDBFE",
+      "text_primary": "#0F172A",
+      "text_secondary": "#475569",
+      "border": "#0F172A"
+    },
+    "rules": [
+      "Use warm off-white (#FFFDF9) as the global background to reduce eye strain.",
+      "CTAs use the warm Coral (primary) or Mint (secondary) with bold slate-900 text.",
+      "Borders are thick and dark (#0F172A) to provide clear structure and 'cute brutalism'.",
+      "All interactive elements must pass APCA contrast checks."
+    ]
+  },
+  "layout_and_spacing": {
+    "strategy": "The 'Bento' Grid Protocol with Generous Spacing",
+    "rules": [
+      "Generous padding inside all cards: min p-6, prefer p-8.",
+      "Use rounded-3xl or rounded-2xl for all containers to emphasize the 'soft/cute' aesthetic.",
+      "Thick borders on containers: border-2 border-slate-900.",
+      "Flat, solid shadows for depth instead of blur: shadow-[4px_4px_0px_#0F172A].",
+      "Mobile-first layouts: grid-cols-1 moving to bento grid on larger screens.",
+      "Sections must have deep vertical breathing room: py-16 to py-24."
+    ]
+  },
+  "components": {
+    "buttons": "rounded-full border-2 border-slate-900 shadow-[4px_4px_0px_#0F172A] active:translate-y-1 active:shadow-none transition-all font-bold",
+    "cards": "rounded-3xl border-2 border-slate-900 shadow-[6px_6px_0px_#0F172A] bg-white p-6 sm:p-8",
+    "inputs": "rounded-2xl border-2 border-slate-900 bg-white px-4 py-3 focus:ring-4 focus:ring-primary/30 outline-none text-slate-900 placeholder:text-slate-400",
+    "tags_badges": "rounded-full border-2 border-slate-900 px-3 py-1 text-sm font-bold uppercase tracking-wider",
+    "shadcn_overrides": [
+      "Override default Shadcn card components to use the brutalist borders and flat shadows.",
+      "Override Dialog and Sheet components to have rounded-3xl corners and border-2.",
+      "Never use the default Vercel-look thin borders and soft blurry shadows."
+    ]
+  },
+  "motion": {
+    "strategy": "Bouncy & Friendly",
+    "rules": [
+      "Use spring animations rather than linear easing (e.g., Framer Motion type: 'spring', stiffness: 400, damping: 17).",
+      "Hover states should slightly lift the element (-translate-y-1) and increase the flat shadow offset.",
+      "Click states (active) must push the element down (translate-y-1) and remove the shadow to feel tactile.",
+      "Stagger list items on entrance."
+    ]
+  },
+  "icons_and_assets": {
+    "icons": "iconoir-react",
+    "icon_rules": "Use large, clear icons with a stroke width of 2.5 or 3 to match the friendly/bold aesthetic. Icons should have an absolute background circle (e.g., bg-accent_yellow rounded-full p-3) for emphasis.",
+    "testing": "All interactive elements must include a data-testid attribute in kebab-case (e.g., data-testid='resource-card-button')."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1758270705641-acf09b68a91f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwzfHxkaXZlcnNlJTIwZnJpZW5kbHklMjBjb21tdW5pdHklMjBzbWlsaW5nfGVufDB8fHx8MTc3NTIyNzc1MXww&ixlib=rb-4.1.0&q=85",
+      "category": "hero",
+      "description": "Friendly diverse smiling people, showing a welcoming community."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1762503203730-ca33982518af?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxjb2xvcmZ1bCUyMHBhc3RlbCUyMGFic3RyYWN0JTIwc29mdHxlbnwwfHx8fDE3NzUyMjc3NjV8MA&ixlib=rb-4.1.0&q=85",
+      "category": "background",
+      "description": "Abstract swirl of blue, pink, and yellow colors for soft background textures."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1753102542049-42c67a9406f4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwzfHxjb2xvcmZ1bCUyMHBhc3RlbCUyMGFic3RyYWN0JTIwc29mdHxlbnwwfHx8fDE3NzUyMjc3NjV8MA&ixlib=rb-4.1.0&q=85",
+      "category": "decorative",
+      "description": "Colorful floating bubbles on a blue background, to be used in 'cute' empty states or loading screens."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1718049860799-90b2a3876d6d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTN8MHwxfHNlYXJjaHwxfHxtYXAlMjBwaW4lMjBwb2ludGVyJTIwbG9jYXRpb258ZW58MHx8fHwxNzc1MjI3NzY1fDA&ixlib=rb-4.1.0&q=85",
+      "category": "maps",
+      "description": "A map with pins, useful as an overlay or background for the resource locator feature."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Install and use 'Nunito' for headings and 'Figtree' for body via next/font or standard import.",
+    "Install 'iconoir-react' for rounded, friendly icons. Run: yarn add iconoir-react",
+    "Install 'framer-motion' for bouncy micro-interactions on cards and buttons.",
+    "Implement the 'Bento Grid' approach for the main dashboard showing Job Listings, Resources, Benefits, etc. Make the layout highly asymmetric and fun.",
+    "Do NOT use generic Shadcn borders. Override everything to have border-2 border-slate-900 and flat shadows for the 'cute brutalism' effect.",
+    "Ensure all buttons and inputs are large (p-4 or p-6) to be easily tapable for users with accessibility needs or older devices.",
+    "Apply `data-testid` to all interactive components in kebab-case."
+  ]
+}
