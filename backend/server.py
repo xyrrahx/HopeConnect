@@ -85,6 +85,8 @@ class Job(BaseModel):
     company: str
     description: str
     location: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     type: str
     salary: Optional[str] = None
     requirements: List[str] = []
@@ -96,6 +98,8 @@ class JobCreate(BaseModel):
     company: str
     description: str
     location: str
+    lat: float
+    lng: float
     type: str
     salary: Optional[str] = None
     requirements: List[str] = []
@@ -256,6 +260,11 @@ async def get_nearby_resources(lat: float, lng: float, category: Optional[str] =
     
     return resources
 
+@api_router.get("/jobs/test")
+async def test_jobs():
+    jobs = await db.jobs.find({}, {"_id": 0}).to_list(1000)
+    return {"count": len(jobs), "first_job": jobs[0] if jobs else None}
+
 @api_router.get("/jobs", response_model=List[Job])
 async def get_jobs(type: Optional[str] = None):
     query = {"type": type} if type else {}
@@ -264,6 +273,7 @@ async def get_jobs(type: Optional[str] = None):
     for job in jobs:
         if isinstance(job['posted_at'], str):
             job['posted_at'] = datetime.fromisoformat(job['posted_at'])
+        logging.info(f"Job {job.get('title')}: lat={job.get('lat')}, lng={job.get('lng')}")
     
     return jobs
 
@@ -398,8 +408,9 @@ async def startup_db():
     job_count = await db.jobs.count_documents({})
     if job_count == 0:
         sample_jobs = [
-            {"id": str(uuid.uuid4()), "title": "Warehouse Associate", "company": "QuickShip Logistics", "description": "Entry-level position, no experience needed", "location": "Downtown", "type": "Full-time", "salary": "$15/hr", "requirements": ["Must be 18+", "Able to lift 50lbs"], "contact": "jobs@quickship.com", "posted_at": datetime.now(timezone.utc).isoformat()},
-            {"id": str(uuid.uuid4()), "title": "Kitchen Helper", "company": "Sunrise Diner", "description": "Help with food prep and cleaning", "location": "Midtown", "type": "Part-time", "salary": "$14/hr + tips", "requirements": ["Food handler's permit (we can help you get it)"], "contact": "555-0201", "posted_at": datetime.now(timezone.utc).isoformat()},
+            {"id": str(uuid.uuid4()), "title": "Warehouse Associate", "company": "QuickShip Logistics", "description": "Entry-level position, no experience needed", "location": "Downtown", "lat": 40.7500, "lng": -73.9900, "type": "Full-time", "salary": "$15/hr", "requirements": ["Must be 18+", "Able to lift 50lbs"], "contact": "jobs@quickship.com", "posted_at": datetime.now(timezone.utc).isoformat()},
+            {"id": str(uuid.uuid4()), "title": "Kitchen Helper", "company": "Sunrise Diner", "description": "Help with food prep and cleaning", "location": "Midtown", "lat": 40.7589, "lng": -73.9851, "type": "Part-time", "salary": "$14/hr + tips", "requirements": ["Food handler's permit (we can help you get it)"], "contact": "555-0201", "posted_at": datetime.now(timezone.utc).isoformat()},
+            {"id": str(uuid.uuid4()), "title": "Retail Cashier", "company": "Corner Market", "description": "Friendly cashier position", "location": "Uptown", "lat": 40.7700, "lng": -73.9700, "type": "Part-time", "salary": "$13.50/hr", "requirements": ["Customer service skills", "Basic math"], "contact": "555-0202", "posted_at": datetime.now(timezone.utc).isoformat()},
         ]
         await db.jobs.insert_many(sample_jobs)
     
