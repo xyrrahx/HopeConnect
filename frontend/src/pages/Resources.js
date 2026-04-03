@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { MapPin, Phone, Clock, Search, Filter, Heart } from 'iconoir-react';
+import ResourceMap from '../components/ResourceMap';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,7 +18,7 @@ function Resources() {
   const [locationError, setLocationError] = useState('');
   const [searchRadius, setSearchRadius] = useState(25);
 
-  const categories = ['all', 'Shelter', 'Food', 'Healthcare', 'Public Washroom', 'Community Centre', 'Free Laundromat', 'Clothing Bank', 'Phone Charging', 'Free WiFi', 'Water Refill', 'Free Meals', 'Harm Reduction', 'Legal Aid', 'ID Services'];
+  const categories = ['all', 'Shelter', 'Food', 'Healthcare', 'Public Washroom', 'Community Centre', 'Free Laundromat', 'Clothing Bank', 'Phone Charging', 'Free WiFi', 'Water Refill', 'Free Meals', 'Harm Reduction', 'Legal Aid', 'ID Services', 'Veterans Services', 'Pet Services', 'Transportation', 'Seasonal Resources'];
   const radiusOptions = [5, 10, 25, 50];
 
   useEffect(() => {
@@ -229,6 +230,8 @@ function Resources() {
           </div>
         </div>
 
+        <ResourceMap resources={filteredResources} userLocation={userLocation} />
+
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-12 h-12 border-4 border-slate-900 border-t-[#FF9D8A] rounded-full animate-spin"></div>
@@ -261,6 +264,10 @@ function Resources() {
                       resource.category === 'Harm Reduction' ? 'bg-[#E6C9FF]' :
                       resource.category === 'Legal Aid' ? 'bg-[#D4E6A5]' :
                       resource.category === 'ID Services' ? 'bg-[#FFE6D5]' :
+                      resource.category === 'Veterans Services' ? 'bg-[#C9E4CA]' :
+                      resource.category === 'Pet Services' ? 'bg-[#FFB3D9]' :
+                      resource.category === 'Transportation' ? 'bg-[#B5D4FF]' :
+                      resource.category === 'Seasonal Resources' ? 'bg-[#E6E6C9]' :
                       'bg-[#FDE68A]'
                     }`}
                   >
