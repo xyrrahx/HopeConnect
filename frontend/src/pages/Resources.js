@@ -17,7 +17,7 @@ function Resources() {
   const [locationError, setLocationError] = useState('');
   const [searchRadius, setSearchRadius] = useState(25);
 
-  const categories = ['all', 'Shelter', 'Food', 'Healthcare', 'Public Washroom', 'Community Centre'];
+  const categories = ['all', 'Shelter', 'Food', 'Healthcare', 'Public Washroom', 'Community Centre', 'Free Laundromat'];
   const radiusOptions = [5, 10, 25, 50];
 
   useEffect(() => {
@@ -244,6 +244,7 @@ function Resources() {
                       resource.category === 'Healthcare' ? 'bg-[#FDE68A]' :
                       resource.category === 'Public Washroom' ? 'bg-[#BFDBFE]' :
                       resource.category === 'Community Centre' ? 'bg-[#DDA7E6]' :
+                      resource.category === 'Free Laundromat' ? 'bg-[#FFC9E6]' :
                       'bg-[#FDE68A]'
                     }`}
                   >
