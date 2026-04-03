@@ -155,22 +155,30 @@ function Resources() {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex items-center gap-3">
             <Filter className="w-5 h-5 text-slate-700" strokeWidth={2.5} />
-            {categories.map(cat => (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              data-testid="category-filter-dropdown"
+              className="px-6 py-3 rounded-full border-2 border-slate-900 bg-white font-bold text-sm uppercase tracking-wider focus:ring-4 focus:ring-[#FF9D8A]/30 outline-none cursor-pointer shadow-[4px_4px_0px_#0F172A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#0F172A] transition-all"
+              style={{ fontFamily: 'Nunito, sans-serif' }}
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat === 'all' ? 'All Categories' : cat}
+                </option>
+              ))}
+            </select>
+            {selectedCategory !== 'all' && (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                data-testid={`filter-${cat.toLowerCase()}`}
-                className={`px-4 py-2 rounded-full border-2 border-slate-900 font-bold text-sm uppercase tracking-wider transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-[#FF9D8A] text-slate-900 shadow-[2px_2px_0px_#0F172A]'
-                    : 'bg-white text-slate-700 hover:bg-[#A7E6D7]'
-                }`}
+                onClick={() => setSelectedCategory('all')}
+                data-testid="clear-filter-button"
+                className="px-4 py-2 rounded-full border-2 border-slate-900 bg-[#FFE4B5] font-bold text-sm hover:bg-[#FFD7A5] transition-all"
               >
-                {cat}
+                Clear Filter
               </button>
-            ))}
+            )}
           </div>
         </div>
 
