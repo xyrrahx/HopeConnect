@@ -1,34 +1,93 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+.App {
+  min-height: 100vh;
+  background-color: var(--bg-main);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  padding: 0.75rem 2rem;
+  font-weight: 700;
+  box-shadow: 4px 4px 0px var(--border);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px var(--border);
 }
 
-.App-link {
-    color: #61dafb;
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  padding: 0.75rem 2rem;
+  font-weight: 700;
+  box-shadow: 4px 4px 0px var(--border);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px var(--border);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 1.5rem;
+  box-shadow: 6px 6px 0px var(--border);
+  padding: 2rem;
+  transition: all 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 8px 8px 0px var(--border);
+}
+
+.input-field {
+  border: 2px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: var(--text-primary);
+  font-family: 'Figtree', sans-serif;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  box-shadow: 0 0 0 4px rgba(255, 157, 138, 0.3);
+}
+
+.badge {
+  border: 2px solid var(--border);
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
 }
