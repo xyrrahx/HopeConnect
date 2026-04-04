@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Clock, Heart } from 'iconoir-react';
+import { MapPin, Phone, Clock, Heart, OpenNewWindow } from 'iconoir-react';
 import { getCategoryColor } from '../utils/categoryColors';
 
 function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
@@ -79,6 +79,19 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
           ))}
         </div>
       )}
+
+      <div className="mt-4 pt-4 border-t-2 border-slate-200">
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${resource.lat},${resource.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid={`directions-button-${resource.id}`}
+          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 border-slate-900 bg-[#BFDBFE] font-bold text-slate-900 text-sm shadow-[3px_3px_0px_#0F172A] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_#0F172A] active:translate-y-[1px] active:shadow-none transition-all"
+        >
+          <OpenNewWindow className="w-4 h-4" strokeWidth={2.5} />
+          <span>Get Directions</span>
+        </a>
+      </div>
     </motion.div>
   );
 }

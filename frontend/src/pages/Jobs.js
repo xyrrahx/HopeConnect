@@ -268,15 +268,32 @@ function Jobs() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t-2 border-slate-900">
-                  <p className="text-sm text-slate-600 font-semibold mb-2">Contact:</p>
-                  <a
-                    href={job.contact.includes('@') ? `mailto:${job.contact}` : `tel:${job.contact}`}
-                    data-testid={`job-contact-${job.id}`}
-                    className="inline-block px-6 py-3 rounded-full border-2 border-slate-900 bg-[#A7E6D7] font-bold text-slate-900 shadow-[4px_4px_0px_#0F172A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#0F172A] active:translate-y-[1px] active:shadow-none transition-all"
-                  >
-                    {job.contact}
-                  </a>
+                <div className="pt-4 border-t-2 border-slate-900 flex flex-wrap gap-3">
+                  <div>
+                    <p className="text-sm text-slate-600 font-semibold mb-2">Contact:</p>
+                    <a
+                      href={job.contact.includes('@') ? `mailto:${job.contact}` : `tel:${job.contact}`}
+                      data-testid={`job-contact-${job.id}`}
+                      className="inline-block px-6 py-3 rounded-full border-2 border-slate-900 bg-[#A7E6D7] font-bold text-slate-900 shadow-[4px_4px_0px_#0F172A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#0F172A] active:translate-y-[1px] active:shadow-none transition-all"
+                    >
+                      {job.contact}
+                    </a>
+                  </div>
+                  {job.lat && job.lng && (
+                    <div>
+                      <p className="text-sm text-slate-600 font-semibold mb-2">Navigate:</p>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid={`job-directions-${job.id}`}
+                        className="inline-flex items-center space-x-2 px-6 py-3 rounded-full border-2 border-slate-900 bg-[#BFDBFE] font-bold text-slate-900 shadow-[4px_4px_0px_#0F172A] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#0F172A] active:translate-y-[1px] active:shadow-none transition-all"
+                      >
+                        <MapPin className="w-4 h-4" strokeWidth={2.5} />
+                        <span>Get Directions</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
