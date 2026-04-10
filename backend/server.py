@@ -38,6 +38,7 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     favorites: List[str] = []
     sms_enabled: bool = False
+    role: str = "user"
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -157,6 +158,34 @@ class SMSNotification(BaseModel):
     phone: str
     message: str
 
+class PendingResource(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: str
+    description: str
+    address: str
+    phone: Optional[str] = None
+    hours: Optional[str] = None
+    lat: float
+    lng: float
+    services: List[str] = []
+    submitted_by: str = ""
+    submitted_by_name: str = ""
+    status: str = "pending"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PendingResourceCreate(BaseModel):
+    name: str
+    category: str
+    description: str
+    address: str
+    phone: Optional[str] = None
+    hours: Optional[str] = None
+    lat: float
+    lng: float
+    services: List[str] = []
+
 def create_token(user_id: str, email: str):
     payload = {
         "user_id": user_id,
@@ -182,6 +211,15 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 async def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depends(security)):
     return verify_token(credentials)
+
+async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    payload = verify_token(credentials)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid authentication")
+    user_doc = await db.users.find_one({"id": payload['user_id']}, {"_id": 0})
+    if not user_doc or user_doc.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return payload
 
 @api_router.post("/auth/register", response_model=Token)
 async def register(input: UserCreate):
@@ -369,6 +407,65 @@ async def toggle_favorite(resource_id: str, current_user = Depends(get_current_u
     
     return {"status": "success", "action": action, "favorites": favorites}
 
+@api_router.post("/resources/suggest", response_model=PendingResource)
+async def suggest_resource(input: PendingResourceCreate, current_user = Depends(get_current_user)):
+    user_doc = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
+    pending = PendingResource(
+        **input.model_dump(),
+        submitted_by=current_user['user_id'],
+        submitted_by_name=user_doc.get('name', 'Unknown') if user_doc else 'Unknown'
+    )
+    doc = pending.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.pending_resources.insert_one(doc)
+    return pending
+
+@api_router.get("/resources/pending")
+async def get_pending_resources(current_user = Depends(get_admin_user)):
+    pending = await db.pending_resources.find({"status": "pending"}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for p in pending:
+        if isinstance(p.get('created_at'), str):
+            p['created_at'] = datetime.fromisoformat(p['created_at'])
+    return pending
+
+@api_router.post("/resources/pending/{resource_id}/approve")
+async def approve_resource(resource_id: str, current_user = Depends(get_admin_user)):
+    pending_doc = await db.pending_resources.find_one({"id": resource_id}, {"_id": 0})
+    if not pending_doc:
+        raise HTTPException(status_code=404, detail="Pending resource not found")
+
+    resource_data = {
+        "id": str(uuid.uuid4()),
+        "name": pending_doc['name'],
+        "category": pending_doc['category'],
+        "description": pending_doc['description'],
+        "address": pending_doc['address'],
+        "phone": pending_doc.get('phone'),
+        "hours": pending_doc.get('hours'),
+        "lat": pending_doc['lat'],
+        "lng": pending_doc['lng'],
+        "services": pending_doc.get('services', []),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.resources.insert_one(resource_data)
+    await db.pending_resources.update_one({"id": resource_id}, {"$set": {"status": "approved"}})
+    return {"status": "approved", "resource_id": resource_data['id']}
+
+@api_router.post("/resources/pending/{resource_id}/reject")
+async def reject_resource(resource_id: str, current_user = Depends(get_admin_user)):
+    result = await db.pending_resources.update_one({"id": resource_id}, {"$set": {"status": "rejected"}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Pending resource not found")
+    return {"status": "rejected"}
+
+@api_router.get("/admin/stats")
+async def admin_stats(current_user = Depends(get_admin_user)):
+    resources = await db.resources.count_documents({})
+    jobs = await db.jobs.count_documents({})
+    users = await db.users.count_documents({})
+    pending = await db.pending_resources.count_documents({"status": "pending"})
+    return {"resources": resources, "jobs": jobs, "users": users, "pending_submissions": pending}
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -481,6 +578,21 @@ async def startup_db():
 
     if await db.benefits.count_documents({}) == 0:
         await db.benefits.insert_many(_benefit_seed())
+
+    admin_exists = await db.users.find_one({"email": "admin@hopeconnect.com"}, {"_id": 0})
+    if not admin_exists:
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "email": "admin@hopeconnect.com",
+            "name": "Admin",
+            "phone": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "favorites": [],
+            "sms_enabled": False,
+            "role": "admin",
+            "password_hash": pwd_context.hash("admin123")
+        }
+        await db.users.insert_one(admin_user)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

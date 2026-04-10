@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home as HomeIcon, MapPin, Bag as Briefcase, Gift, Group as Users, Phone, User, Menu, X, Heart, LogOut } from 'iconoir-react';
+import { Home as HomeIcon, MapPin, Bag as Briefcase, Gift, Group as Users, Phone, User, Menu, X, Heart, LogOut, Plus, Settings } from 'iconoir-react';
 import '@/App.css';
 import Home from './pages/Home';
 import Resources from './pages/Resources';
@@ -12,6 +12,8 @@ import Community from './pages/Community';
 import Emergency from './pages/Emergency';
 import Profile from './pages/Profile';
 import Auth from './pages/Auth';
+import SuggestResource from './pages/SuggestResource';
+import AdminDashboard from './pages/AdminDashboard';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -45,6 +47,13 @@ function Navigation() {
     { path: '/emergency', icon: Phone, label: 'Emergency' },
   ];
 
+  const extraNavItems = [
+    ...(user ? [{ path: '/suggest', icon: Plus, label: 'Suggest' }] : []),
+    ...(user?.role === 'admin' ? [{ path: '/admin', icon: Settings, label: 'Admin' }] : []),
+  ];
+
+  const allNavItems = [...navItems, ...extraNavItems];
+
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white border-b-2 border-slate-900 shadow-brutal">
@@ -58,7 +67,7 @@ function Navigation() {
             </Link>
 
             <div className="hidden md:flex items-center space-x-1">
-              {navItems.map(item => {
+              {allNavItems.map(item => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 return (
@@ -132,7 +141,7 @@ function Navigation() {
               className="md:hidden border-t-2 border-slate-900 bg-white overflow-hidden"
             >
               <div className="px-4 py-4 space-y-2">
-                {navItems.map(item => {
+                {allNavItems.map(item => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
                   return (
@@ -207,6 +216,8 @@ function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/emergency" element={<Emergency />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/suggest" element={<SuggestResource />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </BrowserRouter>
     </div>
