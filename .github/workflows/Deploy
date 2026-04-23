@@ -1,0 +1,49 @@
+name: Build and Deploy APK to GitHub Releases
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy APK
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build release APK
+        run: gradlew assembleRelease
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
+          echo "version=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/build/outputs/apk/release/app-release.apk
+          body: |
+            # HopeConnect ${{ steps.get_version.outputs.version }}
+            
+            APK Release for version ${{ steps.get_version.outputs.version }}
+            
+            ## Installation
+            Download the APK file below and install it on your Android device.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
