@@ -104,6 +104,7 @@ function Resources() {
           onRadiusChange={setSearchRadius}
           onEnableLocation={getUserLocation}
           resourceCount={filteredResources.length}
+          allCount={resources.length}
         />
 
         <ResourceMap resources={verifiedOnly ? filteredResources.filter(r => r.verified) : filteredResources} userLocation={userLocation} />

@@ -31,9 +31,13 @@ export const useResourceFilters = (resources, userLocation) => {
       )
     }));
     
-    return resourcesWithDistance
+    const withinRadius = resourcesWithDistance
       .filter(resource => resource.distance <= searchRadius)
       .sort((a, b) => a.distance - b.distance);
+    
+    if (withinRadius.length > 0) return withinRadius;
+    
+    return resourcesWithDistance.sort((a, b) => a.distance - b.distance);
   }, [userLocation, searchRadius, calculateDistance]);
 
   useEffect(() => {

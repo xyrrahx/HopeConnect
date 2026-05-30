@@ -6,9 +6,11 @@ function LocationInfo({
   searchRadius, 
   onRadiusChange, 
   onEnableLocation, 
-  resourceCount 
+  resourceCount,
+  allCount
 }) {
   const radiusOptions = [5, 10, 25, 50];
+  const noneNearby = userLocation && resourceCount > 0 && allCount && resourceCount === allCount;
 
   return (
     <div className="mb-8 p-6 bg-[#BFDBFE] rounded-3xl border-2 border-slate-900 shadow-brutal-lg" data-testid="location-notice">
@@ -18,10 +20,13 @@ function LocationInfo({
           {userLocation ? (
             <>
               <h3 className="font-bold text-slate-900 mb-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
-                📍 Showing Resources Within {searchRadius} Miles
+                {noneNearby 
+                  ? 'No resources within ' + searchRadius + ' miles — showing all by distance'
+                  : 'Showing Resources Within ' + searchRadius + ' Miles'
+                }
               </h3>
               <p className="text-sm text-slate-700 font-medium mb-3" style={{ fontFamily: 'Figtree, sans-serif' }}>
-                {resourceCount} resource{resourceCount !== 1 ? 's' : ''} found near you
+                {resourceCount} resource{resourceCount !== 1 ? 's' : ''} {noneNearby ? 'available, sorted by distance' : 'found near you'}
               </p>
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm font-semibold text-slate-700">Search radius:</span>
