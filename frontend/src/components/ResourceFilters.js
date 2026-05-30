@@ -1,11 +1,13 @@
-import { Search, Filter } from 'iconoir-react';
+import { Search, Filter, Check } from 'iconoir-react';
 
 function ResourceFilters({ 
   categories, 
   selectedCategory, 
   onCategoryChange, 
   searchQuery, 
-  onSearchChange 
+  onSearchChange,
+  verifiedOnly,
+  onVerifiedToggle
 }) {
   return (
     <div className="mb-8 space-y-4">
@@ -21,7 +23,7 @@ function ResourceFilters({
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Filter className="w-5 h-5 text-slate-700" strokeWidth={2.5} />
         <select
           value={selectedCategory}
@@ -36,13 +38,28 @@ function ResourceFilters({
             </option>
           ))}
         </select>
-        {selectedCategory !== 'all' && (
+
+        <button
+          onClick={onVerifiedToggle}
+          data-testid="verified-filter-toggle"
+          className={`inline-flex items-center gap-2 px-5 py-3 rounded-full border-2 font-bold text-sm uppercase tracking-wider transition-all cursor-pointer ${
+            verifiedOnly
+              ? 'border-emerald-700 bg-emerald-500 text-white shadow-[4px_4px_0px_#047857]'
+              : 'border-slate-900 bg-white text-slate-700 shadow-[4px_4px_0px_#0F172A] hover:bg-emerald-50'
+          }`}
+          style={{ fontFamily: 'Nunito, sans-serif' }}
+        >
+          <Check className="w-4 h-4" strokeWidth={3} />
+          Verified Only
+        </button>
+
+        {(selectedCategory !== 'all' || verifiedOnly) && (
           <button
-            onClick={() => onCategoryChange('all')}
+            onClick={() => { onCategoryChange('all'); if (verifiedOnly) onVerifiedToggle(); }}
             data-testid="clear-filter-button"
             className="px-4 py-2 rounded-full border-2 border-slate-900 bg-[#FFE4B5] font-bold text-sm hover:bg-[#FFD7A5] transition-all"
           >
-            Clear Filter
+            Clear Filters
           </button>
         )}
       </div>

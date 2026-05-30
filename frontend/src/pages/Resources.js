@@ -15,6 +15,7 @@ function Resources() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   
   const { userLocation, locationError, getUserLocation } = useGeolocation();
   
@@ -92,6 +93,8 @@ function Resources() {
           onCategoryChange={setSelectedCategory}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          verifiedOnly={verifiedOnly}
+          onVerifiedToggle={() => setVerifiedOnly(!verifiedOnly)}
         />
 
         <LocationInfo
@@ -103,7 +106,7 @@ function Resources() {
           resourceCount={filteredResources.length}
         />
 
-        <ResourceMap resources={filteredResources} userLocation={userLocation} />
+        <ResourceMap resources={verifiedOnly ? filteredResources.filter(r => r.verified) : filteredResources} userLocation={userLocation} />
 
         {loading ? (
           <div className="text-center py-12">
@@ -111,7 +114,7 @@ function Resources() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredResources.map((resource, index) => (
+            {(verifiedOnly ? filteredResources.filter(r => r.verified) : filteredResources).map((resource, index) => (
               <ResourceCard
                 key={resource.id}
                 resource={resource}

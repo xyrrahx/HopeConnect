@@ -66,6 +66,8 @@ class Resource(BaseModel):
     lat: float
     lng: float
     services: List[str] = []
+    verified: bool = False
+    claimed_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ResourceCreate(BaseModel):
@@ -186,6 +188,27 @@ class PendingResourceCreate(BaseModel):
     lng: float
     services: List[str] = []
 
+class VerificationClaim(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    resource_id: str
+    resource_name: str = ""
+    business_name: str
+    owner_name: str
+    contact_email: str
+    contact_phone: str = ""
+    proof: str = ""
+    claimed_by: str = ""
+    status: str = "pending"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ClaimRequest(BaseModel):
+    business_name: str
+    owner_name: str
+    contact_email: str
+    contact_phone: str = ""
+    proof: str = ""
+
 def create_token(user_id: str, email: str):
     payload = {
         "user_id": user_id,
@@ -267,14 +290,19 @@ async def get_me(current_user = Depends(get_current_user)):
     return User(**user_doc)
 
 @api_router.get("/resources", response_model=List[Resource])
-async def get_resources(category: Optional[str] = None):
-    query = {"category": category} if category else {}
+async def get_resources(category: Optional[str] = None, verified_only: Optional[bool] = None):
+    query = {}
+    if category:
+        query["category"] = category
+    if verified_only:
+        query["verified"] = True
     resources = await db.resources.find(query, {"_id": 0}).to_list(1000)
     
     for res in resources:
-        if isinstance(res['created_at'], str):
+        if isinstance(res.get('created_at'), str):
             res['created_at'] = datetime.fromisoformat(res['created_at'])
     
+    resources.sort(key=lambda r: (not r.get('verified', False), r.get('name', '')))
     return resources
 
 @api_router.post("/resources", response_model=Resource)
@@ -464,7 +492,64 @@ async def admin_stats(current_user = Depends(get_admin_user)):
     jobs = await db.jobs.count_documents({})
     users = await db.users.count_documents({})
     pending = await db.pending_resources.count_documents({"status": "pending"})
-    return {"resources": resources, "jobs": jobs, "users": users, "pending_submissions": pending}
+    claims = await db.verification_claims.count_documents({"status": "pending"})
+    verified = await db.resources.count_documents({"verified": True})
+    return {"resources": resources, "jobs": jobs, "users": users, "pending_submissions": pending, "pending_claims": claims, "verified_resources": verified}
+
+@api_router.post("/resources/{resource_id}/claim")
+async def claim_resource(resource_id: str, claim: ClaimRequest, current_user = Depends(get_current_user)):
+    resource = await db.resources.find_one({"id": resource_id}, {"_id": 0})
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    existing = await db.verification_claims.find_one({"resource_id": resource_id, "status": "pending"}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="A verification claim is already pending for this resource")
+    vc = VerificationClaim(
+        resource_id=resource_id,
+        resource_name=resource.get('name', ''),
+        claimed_by=current_user['user_id'],
+        **claim.model_dump()
+    )
+    doc = vc.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.verification_claims.insert_one(doc)
+    return {"status": "submitted", "claim_id": vc.id}
+
+@api_router.get("/resources/claims")
+async def get_claims(current_user = Depends(get_admin_user)):
+    claims = await db.verification_claims.find({"status": "pending"}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for c in claims:
+        if isinstance(c.get('created_at'), str):
+            c['created_at'] = datetime.fromisoformat(c['created_at'])
+    return claims
+
+@api_router.post("/resources/claims/{claim_id}/approve")
+async def approve_claim(claim_id: str, current_user = Depends(get_admin_user)):
+    claim_doc = await db.verification_claims.find_one({"id": claim_id}, {"_id": 0})
+    if not claim_doc:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    await db.resources.update_one(
+        {"id": claim_doc['resource_id']},
+        {"$set": {"verified": True, "claimed_by": claim_doc['claimed_by']}}
+    )
+    await db.verification_claims.update_one({"id": claim_id}, {"$set": {"status": "approved"}})
+    return {"status": "approved", "resource_id": claim_doc['resource_id']}
+
+@api_router.post("/resources/claims/{claim_id}/reject")
+async def reject_claim(claim_id: str, current_user = Depends(get_admin_user)):
+    result = await db.verification_claims.update_one({"id": claim_id}, {"$set": {"status": "rejected"}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    return {"status": "rejected"}
+
+@api_router.post("/resources/{resource_id}/toggle-verified")
+async def toggle_verified(resource_id: str, current_user = Depends(get_admin_user)):
+    resource = await db.resources.find_one({"id": resource_id}, {"_id": 0})
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    new_status = not resource.get('verified', False)
+    await db.resources.update_one({"id": resource_id}, {"$set": {"verified": new_status}})
+    return {"status": "success", "verified": new_status}
 
 app.include_router(api_router)
 
