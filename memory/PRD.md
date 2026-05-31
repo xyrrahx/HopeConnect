@@ -14,54 +14,57 @@ A web app aimed at homeless/low-income individuals to find essential resources, 
 ### Core Features
 - 19 resource categories with 55+ seeded resources
 - 3 job listings, 3 benefits, 4 emergency contacts
-- Location-based radius filtering (Haversine distance)
+- Location-based radius filtering (Haversine distance, graceful fallback if no nearby results)
 - Google Maps integration with markers
-- Category dropdown filter, search, radius controls
+- Category dropdown, search, radius controls
 - Offline PWA mode via Service Worker
 - User auth (register/login with JWT), admin role system
 
+### Multi-City Support
+- City field on all resources, city selector dropdown in filters
+- GET /api/resources?city=X filters by city
+- GET /api/resources/cities returns available cities
+- Auto-detect user city from geolocation (planned)
+- City dropdown only shows when 2+ cities exist
+
 ### Resource Cards
-- **"Get Directions"** — deep-links to Google Maps
-- **"Share"** — copy info, SMS share, native share
-- **"QR Code"** — scannable QR for Google Maps directions
-- **"Claim & Verify"** — business owners submit verification claims (free during beta)
+- "Get Directions" — deep-links to Google Maps
+- "Share" — copy info, SMS share, native share
+- "QR Code" — scannable QR for Google Maps directions
+- "Claim & Verify" — business owners submit verification claims (free during beta)
+- "Helpful?" thumbs up/down — anonymous rating, no login needed
 
 ### Verified Badge System
-- Business owners can claim resources via "Claim & Verify" button
+- Business owners claim resources via "Claim & Verify" button
 - Claims go to admin for review (approve/reject)
-- Approved resources get green verified badge + highlighted card styling
-- Verified resources rank higher in search results (sorted first)
-- "Verified Only" filter toggle on resources page
+- Verified resources: green badge, highlighted card, rank higher
+- "Verified Only" filter toggle
 - Admin can manually toggle verification on any resource
-- Monetization hook: verification will be paid after beta period
+- Monetization: verification paid after beta period
 
 ### Admin Dashboard
-- Stats overview (resources, verified, jobs, users, pending, claims)
+- Stats: resources, verified, jobs, users, pending submissions, pending claims
 - 3 tabs: Submissions, Verification Claims, All Resources
-- Approve/reject user-submitted resources
-- Approve/reject verification claims
+- Approve/reject user-submitted resources and claims
 - Toggle verified status on any resource
 
 ### User-Submitted Resources
 - "Suggest a Resource" page with interactive Google Maps pin drop
 - Form with name, category, address, description, services
-- Requires authentication
-- Goes to admin for approval before going live
+- Requires authentication, goes to admin for approval
 
 ## Key API Endpoints
-- GET /api/resources (?category, ?verified_only)
+- GET /api/resources (?category, ?verified_only, ?city)
+- GET /api/resources/cities
+- POST /api/resources/{id}/rate?vote=helpful|not_helpful
 - GET /api/jobs, /api/benefits, /api/emergency
 - POST /api/auth/register, /api/auth/login, GET /api/auth/me
-- POST /api/resources/suggest (auth)
-- GET /api/resources/pending (admin)
-- POST /api/resources/pending/{id}/approve|reject (admin)
-- POST /api/resources/{id}/claim (auth)
-- GET /api/resources/claims (admin)
-- POST /api/resources/claims/{id}/approve|reject (admin)
-- POST /api/resources/{id}/toggle-verified (admin)
-- GET /api/admin/stats (admin)
+- POST /api/resources/suggest, GET /api/resources/pending
+- POST /api/resources/{id}/claim, GET /api/resources/claims
+- POST /api/resources/{id}/toggle-verified
+- GET /api/admin/stats
 
 ## Pending / Backlog
-- P1: SMS Notifications via Twilio (mocked, needs user's Twilio keys)
-- P2: Token storage security (localStorage → httpOnly cookies)
+- P1: SMS Notifications via Twilio (mocked, needs Twilio keys)
+- P2: Token storage security (localStorage -> httpOnly cookies)
 - P2: Component refactoring (Community.js, Profile.js, Benefits.js, Auth.js)
