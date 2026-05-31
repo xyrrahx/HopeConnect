@@ -68,6 +68,9 @@ class Resource(BaseModel):
     services: List[str] = []
     verified: bool = False
     claimed_by: Optional[str] = None
+    city: str = "New York"
+    helpful_count: int = 0
+    not_helpful_count: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ResourceCreate(BaseModel):
@@ -290,12 +293,14 @@ async def get_me(current_user = Depends(get_current_user)):
     return User(**user_doc)
 
 @api_router.get("/resources", response_model=List[Resource])
-async def get_resources(category: Optional[str] = None, verified_only: Optional[bool] = None):
+async def get_resources(category: Optional[str] = None, verified_only: Optional[bool] = None, city: Optional[str] = None):
     query = {}
     if category:
         query["category"] = category
     if verified_only:
         query["verified"] = True
+    if city and city != "all":
+        query["city"] = city
     resources = await db.resources.find(query, {"_id": 0}).to_list(1000)
     
     for res in resources:
@@ -304,6 +309,11 @@ async def get_resources(category: Optional[str] = None, verified_only: Optional[
     
     resources.sort(key=lambda r: (not r.get('verified', False), r.get('name', '')))
     return resources
+
+@api_router.get("/resources/cities")
+async def get_cities():
+    cities = await db.resources.distinct("city")
+    return sorted([c for c in cities if c])
 
 @api_router.post("/resources", response_model=Resource)
 async def create_resource(input: ResourceCreate):
@@ -314,6 +324,18 @@ async def create_resource(input: ResourceCreate):
     
     await db.resources.insert_one(doc)
     return resource
+
+@api_router.post("/resources/{resource_id}/rate")
+async def rate_resource(resource_id: str, vote: str):
+    if vote not in ("helpful", "not_helpful"):
+        raise HTTPException(status_code=400, detail="Vote must be 'helpful' or 'not_helpful'")
+    resource = await db.resources.find_one({"id": resource_id}, {"_id": 0})
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    field = "helpful_count" if vote == "helpful" else "not_helpful_count"
+    await db.resources.update_one({"id": resource_id}, {"$inc": {field: 1}})
+    updated = await db.resources.find_one({"id": resource_id}, {"_id": 0})
+    return {"helpful_count": updated.get("helpful_count", 0), "not_helpful_count": updated.get("not_helpful_count", 0)}
 
 @api_router.get("/resources/nearby")
 async def get_nearby_resources(lat: float, lng: float, category: Optional[str] = None):
@@ -678,6 +700,10 @@ async def startup_db():
             "password_hash": pwd_context.hash("admin123")
         }
         await db.users.insert_one(admin_user)
+
+    # Backfill city and rating fields for existing resources
+    await db.resources.update_many({"city": {"$exists": False}}, {"$set": {"city": "New York"}})
+    await db.resources.update_many({"helpful_count": {"$exists": False}}, {"$set": {"helpful_count": 0, "not_helpful_count": 0}})
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

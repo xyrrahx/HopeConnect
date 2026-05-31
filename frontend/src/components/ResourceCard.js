@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, Clock, Heart, OpenNewWindow, ShareAndroid, Copy, MessageText, QrCode, Check, BadgeCheck } from 'iconoir-react';
+import { MapPin, Phone, Clock, Heart, OpenNewWindow, ShareAndroid, Copy, MessageText, QrCode, Check, BadgeCheck, ThumbsUp, ThumbsDown } from 'iconoir-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { getCategoryColor } from '../utils/categoryColors';
 import axios from 'axios';
@@ -16,6 +16,9 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
   const [claimForm, setClaimForm] = useState({ business_name: '', owner_name: '', contact_email: '', contact_phone: '', proof: '' });
   const [claimStatus, setClaimStatus] = useState(null);
   const [claimLoading, setClaimLoading] = useState(false);
+  const [helpfulCount, setHelpfulCount] = useState(resource.helpful_count || 0);
+  const [notHelpfulCount, setNotHelpfulCount] = useState(resource.not_helpful_count || 0);
+  const [voted, setVoted] = useState(null);
   const categoryColor = getCategoryColor(resource.category);
   const token = localStorage.getItem('token');
 
@@ -26,6 +29,18 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
     await navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVote = async (vote) => {
+    if (voted) return;
+    try {
+      const res = await axios.post(`${API}/resources/${resource.id}/rate?vote=${vote}`);
+      setHelpfulCount(res.data.helpful_count);
+      setNotHelpfulCount(res.data.not_helpful_count);
+      setVoted(vote);
+    } catch (err) {
+      console.error('Vote failed:', err);
+    }
   };
 
   const handleSMSShare = () => {
@@ -137,6 +152,38 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
           ))}
         </div>
       )}
+
+      <div className="mt-4 flex items-center gap-3" data-testid={`rating-section-${resource.id}`}>
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Helpful?</span>
+        <button
+          onClick={() => handleVote('helpful')}
+          disabled={!!voted}
+          data-testid={`thumbs-up-${resource.id}`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${
+            voted === 'helpful'
+              ? 'border-emerald-600 bg-emerald-100 text-emerald-800'
+              : voted ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+              : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50'
+          }`}
+        >
+          <ThumbsUp className="w-3.5 h-3.5" strokeWidth={2.5} />
+          {helpfulCount}
+        </button>
+        <button
+          onClick={() => handleVote('not_helpful')}
+          disabled={!!voted}
+          data-testid={`thumbs-down-${resource.id}`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${
+            voted === 'not_helpful'
+              ? 'border-red-400 bg-red-50 text-red-700'
+              : voted ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+              : 'border-slate-300 bg-white text-slate-600 hover:border-red-400 hover:bg-red-50'
+          }`}
+        >
+          <ThumbsDown className="w-3.5 h-3.5" strokeWidth={2.5} />
+          {notHelpfulCount}
+        </button>
+      </div>
 
       <div className="mt-4 pt-4 border-t-2 border-slate-200 flex flex-wrap gap-2">
         <a

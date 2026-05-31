@@ -16,6 +16,8 @@ function Resources() {
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [cities, setCities] = useState([]);
+  const [selectedCity, setSelectedCity] = useState('all');
   
   const { userLocation, locationError, getUserLocation } = useGeolocation();
   
@@ -33,6 +35,7 @@ function Resources() {
 
   useEffect(() => {
     fetchResources();
+    fetchCities();
     getUserLocation();
     
     const token = localStorage.getItem('token');
@@ -43,14 +46,30 @@ function Resources() {
     }
   }, [getUserLocation]);
 
+  useEffect(() => {
+    fetchResources();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCity]);
+
   const fetchResources = async () => {
     try {
-      const response = await axios.get(`${API}/resources`);
+      const params = {};
+      if (selectedCity && selectedCity !== 'all') params.city = selectedCity;
+      const response = await axios.get(`${API}/resources`, { params });
       setResources(response.data);
     } catch (error) {
       console.error('Error fetching resources:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      const response = await axios.get(`${API}/resources/cities`);
+      setCities(response.data);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
     }
   };
 
@@ -95,6 +114,9 @@ function Resources() {
           onSearchChange={setSearchQuery}
           verifiedOnly={verifiedOnly}
           onVerifiedToggle={() => setVerifiedOnly(!verifiedOnly)}
+          cities={cities}
+          selectedCity={selectedCity}
+          onCityChange={setSelectedCity}
         />
 
         <LocationInfo
