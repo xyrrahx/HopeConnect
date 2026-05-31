@@ -12,59 +12,45 @@ A web app aimed at homeless/low-income individuals to find essential resources, 
 ## What's Implemented
 
 ### Core Features
-- 19 resource categories with 55+ seeded resources
+- 19 resource categories with 93 total resources (57 NYC + 36 Toronto)
+- Multi-city support: New York + Toronto with city selector dropdown
 - 3 job listings, 3 benefits, 4 emergency contacts
-- Location-based radius filtering (Haversine distance, graceful fallback if no nearby results)
+- Location-based radius filtering with graceful fallback
 - Google Maps integration with markers
-- Category dropdown, search, radius controls
+- Category, city, search, radius, and verified filters
 - Offline PWA mode via Service Worker
 - User auth (register/login with JWT), admin role system
-
-### Multi-City Support
-- City field on all resources, city selector dropdown in filters
-- GET /api/resources?city=X filters by city
-- GET /api/resources/cities returns available cities
-- Auto-detect user city from geolocation (planned)
-- City dropdown only shows when 2+ cities exist
 
 ### Resource Cards
 - "Get Directions" — deep-links to Google Maps
 - "Share" — copy info, SMS share, native share
 - "QR Code" — scannable QR for Google Maps directions
-- "Claim & Verify" — business owners submit verification claims (free during beta)
+- "Claim & Verify" — business owners submit verification claims (free beta)
 - "Helpful?" thumbs up/down — anonymous rating, no login needed
 
 ### Verified Badge System
-- Business owners claim resources via "Claim & Verify" button
-- Claims go to admin for review (approve/reject)
-- Verified resources: green badge, highlighted card, rank higher
-- "Verified Only" filter toggle
-- Admin can manually toggle verification on any resource
-- Monetization: verification paid after beta period
+- Claim & verify flow with admin approval
+- Green verified badge, highlighted cards, rank higher
+- "Verified Only" filter, admin manual toggle
 
 ### Admin Dashboard
-- Stats: resources, verified, jobs, users, pending submissions, pending claims
+- Stats: resources, verified, jobs, users, pending, claims
 - 3 tabs: Submissions, Verification Claims, All Resources
-- Approve/reject user-submitted resources and claims
-- Toggle verified status on any resource
 
 ### User-Submitted Resources
-- "Suggest a Resource" page with interactive Google Maps pin drop
-- Form with name, category, address, description, services
-- Requires authentication, goes to admin for approval
+- Interactive Google Maps pin drop + form, admin approval
 
 ## Key API Endpoints
 - GET /api/resources (?category, ?verified_only, ?city)
 - GET /api/resources/cities
 - POST /api/resources/{id}/rate?vote=helpful|not_helpful
-- GET /api/jobs, /api/benefits, /api/emergency
-- POST /api/auth/register, /api/auth/login, GET /api/auth/me
+- POST /api/resources/{id}/claim
+- GET /api/resources/claims (admin)
+- POST /api/resources/{id}/toggle-verified (admin)
 - POST /api/resources/suggest, GET /api/resources/pending
-- POST /api/resources/{id}/claim, GET /api/resources/claims
-- POST /api/resources/{id}/toggle-verified
 - GET /api/admin/stats
 
 ## Pending / Backlog
 - P1: SMS Notifications via Twilio (mocked, needs Twilio keys)
-- P2: Token storage security (localStorage -> httpOnly cookies)
-- P2: Component refactoring (Community.js, Profile.js, Benefits.js, Auth.js)
+- P2: Token storage security
+- P2: Component refactoring
