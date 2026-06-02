@@ -78,7 +78,8 @@ function Resources() {
         .then(res => setFavorites(res.data.favorites || []))
         .catch(() => {});
     }
-  }, [getUserLocation, fetchCommunityResources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (userLocation) {
