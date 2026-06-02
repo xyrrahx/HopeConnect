@@ -12,6 +12,8 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
 from passlib.context import CryptContext
+import httpx
+import math
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -314,6 +316,159 @@ async def get_resources(category: Optional[str] = None, verified_only: Optional[
 async def get_cities():
     cities = await db.resources.distinct("city")
     return sorted([c for c in cities if c])
+
+# OpenStreetMap category mapping
+OSM_CATEGORY_MAP = {
+    "social_facility_shelter": "Shelter",
+    "amenity_food_bank": "Food",
+    "amenity_clinic": "Healthcare",
+    "amenity_hospital": "Healthcare",
+    "amenity_pharmacy": "Healthcare",
+    "amenity_toilets": "Public Washroom",
+    "amenity_community_centre": "Community Centre",
+    "amenity_laundry": "Free Laundromat",
+    "amenity_library": "Free WiFi",
+    "amenity_drinking_water": "Water Refill",
+    "amenity_social_facility": "Community Centre",
+    "amenity_place_of_worship": "Community Centre",
+    "office_ngo": "Legal Aid",
+    "office_charity": "Community Centre",
+}
+
+def _build_overpass_query(lat: float, lng: float, radius: int = 5000):
+    return f"""
+    [out:json][timeout:25];
+    (
+      nwr["amenity"="clinic"](around:{radius},{lat},{lng});
+      nwr["amenity"="hospital"](around:{radius},{lat},{lng});
+      nwr["amenity"="food_bank"](around:{radius},{lat},{lng});
+      nwr["amenity"="laundry"](around:{radius},{lat},{lng});
+      nwr["amenity"="toilets"](around:{radius},{lat},{lng});
+      nwr["amenity"="community_centre"](around:{radius},{lat},{lng});
+      nwr["amenity"="library"](around:{radius},{lat},{lng});
+      nwr["amenity"="drinking_water"](around:{radius},{lat},{lng});
+      nwr["amenity"="pharmacy"](around:{radius},{lat},{lng});
+      nwr["amenity"="social_facility"](around:{radius},{lat},{lng});
+      nwr["amenity"="place_of_worship"](around:{radius},{lat},{lng});
+      nwr["social_facility"="shelter"](around:{radius},{lat},{lng});
+      nwr["office"="ngo"](around:{radius},{lat},{lng});
+      nwr["office"="charity"](around:{radius},{lat},{lng});
+    );
+    out center 100;
+    """
+
+def _osm_to_resource(element: dict) -> dict:
+    tags = element.get("tags", {})
+    lat = element.get("lat") or element.get("center", {}).get("lat")
+    lng = element.get("lon") or element.get("center", {}).get("lon")
+    if not lat or not lng:
+        return None
+
+    name = tags.get("name", "")
+    if not name:
+        return None
+
+    category = "Community Centre"
+    amenity = tags.get("amenity", "")
+    social = tags.get("social_facility", "")
+    office = tags.get("office", "")
+
+    if social == "shelter":
+        category = "Shelter"
+    elif amenity:
+        category = OSM_CATEGORY_MAP.get(f"amenity_{amenity}", "Community Centre")
+    elif office:
+        category = OSM_CATEGORY_MAP.get(f"office_{office}", "Community Centre")
+
+    services = []
+    if tags.get("wheelchair") == "yes":
+        services.append("Wheelchair Accessible")
+    if tags.get("internet_access") in ("yes", "wlan"):
+        services.append("Free WiFi")
+    if tags.get("opening_hours"):
+        services.append("Hours Posted")
+
+    addr_parts = [tags.get("addr:housenumber", ""), tags.get("addr:street", "")]
+    city = tags.get("addr:city", "")
+    addr_extra = [city, tags.get("addr:state", ""), tags.get("addr:postcode", "")]
+    address = " ".join(p for p in addr_parts if p)
+    if any(addr_extra):
+        address += ", " + ", ".join(p for p in addr_extra if p)
+    if not address.strip() or address.strip() == ",":
+        address = name
+
+    return {
+        "id": f"osm-{element.get('id', '')}",
+        "name": name,
+        "category": category,
+        "description": tags.get("description", f"{category} found via OpenStreetMap"),
+        "address": address.strip().strip(",").strip(),
+        "phone": tags.get("phone") or tags.get("contact:phone"),
+        "hours": tags.get("opening_hours"),
+        "lat": lat,
+        "lng": lng,
+        "services": services,
+        "verified": False,
+        "city": city or "Nearby",
+        "helpful_count": 0,
+        "not_helpful_count": 0,
+        "source": "osm",
+        "website": tags.get("website") or tags.get("contact:website"),
+    }
+
+def _haversine_miles(lat1, lng1, lat2, lng2):
+    R = 3959
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2
+    return R * 2 * math.asin(math.sqrt(a))
+
+@api_router.get("/resources/discover")
+async def discover_resources(lat: float, lng: float, radius_miles: float = 5):
+    radius_meters = int(radius_miles * 1609.34)
+    cache_key = f"{round(lat, 2)}_{round(lng, 2)}_{radius_miles}"
+
+    cached = await db.osm_cache.find_one({"cache_key": cache_key}, {"_id": 0})
+    if cached:
+        cache_age = datetime.now(timezone.utc) - datetime.fromisoformat(cached["cached_at"])
+        if cache_age < timedelta(hours=6):
+            results = cached["resources"]
+            for r in results:
+                r["distance"] = _haversine_miles(lat, lng, r["lat"], r["lng"])
+            results.sort(key=lambda r: r["distance"])
+            return results
+
+    query = _build_overpass_query(lat, lng, radius_meters)
+    try:
+        async with httpx.AsyncClient(timeout=30, headers={"User-Agent": "HopeConnect/1.0"}) as client_http:
+            resp = await client_http.post(
+                "https://overpass-api.de/api/interpreter",
+                data={"data": query},
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception:
+        return []
+
+    resources = []
+    seen_names = set()
+    for element in data.get("elements", []):
+        r = _osm_to_resource(element)
+        if r and r["name"].lower() not in seen_names:
+            seen_names.add(r["name"].lower())
+            r["distance"] = _haversine_miles(lat, lng, r["lat"], r["lng"])
+            resources.append(r)
+
+    resources.sort(key=lambda r: r["distance"])
+
+    await db.osm_cache.update_one(
+        {"cache_key": cache_key},
+        {"$set": {"cache_key": cache_key, "resources": resources, "cached_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+
+    return resources
 
 @api_router.post("/resources", response_model=Resource)
 async def create_resource(input: ResourceCreate):

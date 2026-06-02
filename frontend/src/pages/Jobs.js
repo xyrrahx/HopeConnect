@@ -34,7 +34,6 @@ function Jobs() {
           });
         },
         (error) => {
-          console.log('Location error:', error);
           setLocationError('Unable to get location. Showing all jobs.');
         }
       );
@@ -59,7 +58,7 @@ function Jobs() {
       setJobs(response.data);
       setFilteredJobs(response.data);
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      // Error fetching jobs silently handled
     } finally {
       setLoading(false);
     }
@@ -259,7 +258,7 @@ function Jobs() {
                     <p className="text-sm font-bold text-slate-900 mb-2">Requirements:</p>
                     <ul className="space-y-1">
                       {job.requirements.map((req, idx) => (
-                        <li key={idx} className="text-sm text-slate-700 font-medium flex items-start">
+                        <li key={`${job.id}-req-${idx}`} className="text-sm text-slate-700 font-medium flex items-start">
                           <span className="mr-2">•</span>
                           <span>{req}</span>
                         </li>

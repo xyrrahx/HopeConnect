@@ -33,7 +33,7 @@ function Community() {
       setPosts(response.data);
       setFilteredPosts(response.data);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      // Error fetching posts silently handled
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ function Community() {
       setShowCreatePost(false);
       fetchPosts();
     } catch (error) {
-      console.error('Error creating post:', error);
+      // Error creating post
       alert('Failed to create post');
     }
   };

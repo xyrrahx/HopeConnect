@@ -15,7 +15,6 @@ export const useGeolocation = () => {
           setLocationError('');
         },
         (error) => {
-          console.log('Location error:', error);
           setLocationError('Unable to get location. Showing all resources.');
         }
       );

@@ -39,7 +39,7 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
       setNotHelpfulCount(res.data.not_helpful_count);
       setVoted(vote);
     } catch (err) {
-      console.error('Vote failed:', err);
+      // Vote failed silently
     }
   };
 
@@ -71,6 +71,18 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
 
   const isVerified = resource.verified;
 
+  const getVoteClass = (type) => {
+    if (voted === type) {
+      return type === 'helpful'
+        ? 'border-emerald-600 bg-emerald-100 text-emerald-800'
+        : 'border-red-400 bg-red-50 text-red-700';
+    }
+    if (voted) return 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed';
+    return type === 'helpful'
+      ? 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50'
+      : 'border-slate-300 bg-white text-slate-600 hover:border-red-400 hover:bg-red-50';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -95,6 +107,11 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
             >
               <Check className="w-3.5 h-3.5" strokeWidth={3} />
               Verified
+            </div>
+          )}
+          {resource.source === 'osm' && (
+            <div className="px-2 py-0.5 rounded-full bg-blue-100 border border-blue-300 text-blue-700 text-xs font-bold uppercase tracking-wider">
+              Live
             </div>
           )}
         </div>
@@ -141,12 +158,18 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
             <span className="text-slate-700 font-medium">{resource.hours}</span>
           </div>
         )}
+        {resource.website && (
+          <div className="flex items-center space-x-2">
+            <OpenNewWindow className="w-4 h-4 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
+            <a href={resource.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-medium hover:underline truncate">{resource.website.replace(/^https?:\/\//, '').slice(0, 35)}</a>
+          </div>
+        )}
       </div>
 
       {resource.services && resource.services.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {resource.services.map((service, idx) => (
-            <span key={idx} className="px-2 py-1 bg-[#FFFDF9] border border-slate-900 rounded-full text-xs font-semibold text-slate-700">
+            <span key={`svc-${idx}-${service}`} className="px-2 py-1 bg-[#FFFDF9] border border-slate-900 rounded-full text-xs font-semibold text-slate-700">
               {service}
             </span>
           ))}
@@ -159,12 +182,7 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
           onClick={() => handleVote('helpful')}
           disabled={!!voted}
           data-testid={`thumbs-up-${resource.id}`}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${
-            voted === 'helpful'
-              ? 'border-emerald-600 bg-emerald-100 text-emerald-800'
-              : voted ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50'
-          }`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${getVoteClass('helpful')}`}
         >
           <ThumbsUp className="w-3.5 h-3.5" strokeWidth={2.5} />
           {helpfulCount}
@@ -173,12 +191,7 @@ function ResourceCard({ resource, index, favorites, onToggleFavorite }) {
           onClick={() => handleVote('not_helpful')}
           disabled={!!voted}
           data-testid={`thumbs-down-${resource.id}`}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${
-            voted === 'not_helpful'
-              ? 'border-red-400 bg-red-50 text-red-700'
-              : voted ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 bg-white text-slate-600 hover:border-red-400 hover:bg-red-50'
-          }`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${getVoteClass('not_helpful')}`}
         >
           <ThumbsDown className="w-3.5 h-3.5" strokeWidth={2.5} />
           {notHelpfulCount}

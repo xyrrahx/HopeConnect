@@ -40,7 +40,7 @@ function Profile() {
         setFavorites(favoriteResources);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      // Error fetching user data — clear token
       localStorage.removeItem('token');
       window.location.href = '/';
     } finally {
@@ -65,7 +65,7 @@ function Profile() {
       setSmsEnabled(!smsEnabled);
       alert(`SMS notifications ${!smsEnabled ? 'enabled' : 'disabled'} (MOCKED)`);
     } catch (error) {
-      console.error('Error toggling SMS:', error);
+      // Error toggling SMS
       alert('Failed to update SMS preferences');
     }
   };

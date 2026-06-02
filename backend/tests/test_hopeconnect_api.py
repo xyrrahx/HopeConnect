@@ -211,7 +211,7 @@ class TestMockedSMSAPI:
         })
         assert response.status_code == 200
         data = response.json()
-        assert data.get("mocked") == True or "MOCKED" in data.get("message", "")
+        assert data.get("mocked") or "MOCKED" in data.get("message", "")
     
     def test_sms_subscribe_works(self):
         """Test SMS subscription endpoint"""

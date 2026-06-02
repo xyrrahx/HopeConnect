@@ -25,7 +25,7 @@ function Benefits() {
       setBenefits(response.data);
       setFilteredBenefits(response.data);
     } catch (error) {
-      console.error('Error fetching benefits:', error);
+      // Error fetching benefits silently handled
     } finally {
       setLoading(false);
     }

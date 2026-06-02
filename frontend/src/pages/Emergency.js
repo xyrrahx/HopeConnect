@@ -19,7 +19,7 @@ function Emergency() {
       const response = await axios.get(`${API}/emergency`);
       setContacts(response.data);
     } catch (error) {
-      console.error('Error fetching emergency contacts:', error);
+      // Error fetching emergency contacts silently handled
     } finally {
       setLoading(false);
     }

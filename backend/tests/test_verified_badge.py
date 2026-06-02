@@ -9,11 +9,11 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Test credentials
-ADMIN_EMAIL = "admin@hopeconnect.com"
-ADMIN_PASSWORD = "admin123"
-DEMO_EMAIL = "demo@hopeconnect.com"
-DEMO_PASSWORD = "demo123"
+# Test credentials from environment
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@hopeconnect.com')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+DEMO_EMAIL = os.environ.get('DEMO_EMAIL', 'demo@hopeconnect.com')
+DEMO_PASSWORD = os.environ.get('DEMO_PASSWORD', 'demo123')
 
 
 @pytest.fixture(scope="module")
@@ -100,7 +100,7 @@ class TestResourcesSortingAndFiltering:
         data = response.json()
         
         for resource in data:
-            assert resource.get('verified') == True, f"Resource {resource.get('name')} is not verified but returned with verified_only=true"
+            assert resource.get('verified'), f"Resource {resource.get('name')} is not verified but returned with verified_only=true"
         print(f"SUCCESS: verified_only filter works - returned {len(data)} verified resources")
 
 
@@ -340,7 +340,7 @@ class TestClaimApprovalFlow:
         resource = next((r for r in resources if r['id'] == resource_id), None)
         
         assert resource is not None
-        assert resource.get('verified') == True, f"Resource should be verified after claim approval"
+        assert resource.get('verified'), f"Resource should be verified after claim approval"
         print(f"Step 3: Resource {resource_name} is now verified")
         
         # 5. Clean up - toggle back to non-verified
